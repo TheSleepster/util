@@ -279,7 +279,7 @@ operator-(ivec2 A, ivec2 B)
 static inline ivec2
 operator-(ivec2 A, int B)
 {
-    ivec2 Result = {0};
+    ivec2 Result = {};
     
     Result.X = A.X - B;
     Result.Y = A.Y - B;
@@ -310,7 +310,7 @@ operator*(ivec2 A, ivec2 B)
 static inline ivec2
 operator*(ivec2 A, int B)
 {
-    ivec2 Result = {0};
+    ivec2 Result = {};
     
     Result.X = int(A.X * B);
     Result.Y = int(A.Y * B);

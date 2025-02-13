@@ -9,8 +9,8 @@
 #define FILEIO_H
 
 #include "types.h"
-#include "Arena.h"
-#include "String.h"
+#include "arena.h"
+#include "custom_string.h"
 
 #include <time.h>
 #include <sys/stat.h>

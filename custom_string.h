@@ -9,7 +9,7 @@
 #define STRING_H
 
 #include "types.h"
-#include "Arena.h"
+#include "arena.h"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -220,7 +220,7 @@ FormatStringToBuffer(char *Buffer, uint64 Count, const char* fmt, va_list args)
 internal inline string
 SprintCStringArgsToBuffer(const char *fmt, va_list args, void *Buffer, uint64 BufferSize)
 {
-    uint64 FormatLength = FormatStringToBuffer((char *)Buffer, BufferSize, fmt, args);
+    int64 FormatLength = FormatStringToBuffer((char *)Buffer, BufferSize, fmt, args);
     
     string Result = {};
     Result.Data = (uint8 *)Buffer;

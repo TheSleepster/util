@@ -20,13 +20,13 @@
 #define ReadWriteBarrier _ReadWriteBarrier(); _mm_lfence()
 
 #include <intrin.h>
-inline int32 AtomicCompareExchangei32(int32 volatile *Target, int32 Expected, int32 Value)
+inline int32 AtomicCompareExchange32(int32 volatile *Target, int32 Expected, int32 Value)
 {
     int32 Result = _InterlockedCompareExchange((long *)Target, Expected, Value);
     return(Result);
 }
 #else
-#define alignas(x)       alignas()
+#define alignas(x)       alignas(x)
 #define inline           inline
 
 #define WriteBarrier     __atomic_signal_fence(__ATOMIC_RELEASE); __atomic_thread_fence(__ATOMIC_RELEASE)

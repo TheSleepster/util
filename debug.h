@@ -17,7 +17,7 @@
 #define printm(Message, ...)   {char BUFFER[128]  = {}; if(strlen(Message) > sizeof(BUFFER)) {Check(0, "[ERROR]: String is too large\n")}; sprintf(BUFFER, Message, ##__VA_ARGS__); printf("%s\n", BUFFER); fflush(stdout);}
 #define printlm(Message, ...)  {char BUFFER[5192] = {}; if(strlen(Message) > sizeof(BUFFER)) {Check(0, "[ERROR]: String is too large\n")}; sprintf(BUFFER, Message, ##__VA_ARGS__); printf("%s\n", BUFFER); fflush(stdout);}
 #define cl_Error(Message, ...) {char BUFFER[512]  = {}; if(strlen(Message) > sizeof(BUFFER)) {Check(0, "[ERROR]: String is too large\n")}; sprintf(BUFFER, Message, ##__VA_ARGS__); printf("[ERROR]: %s\n", BUFFER);  fflush(stdout); Assert(0);}
-#define cl_Info(Message, ...)  {char BUFFER[512]  = {}; if(strlen(Message) > sizeof(BUFFER)) {Check(0, "[ERROR]: String is too large\n")}; sprintf(BUFFER, Message, ##__VA_ARGS__); printf("[INFO]: %s\n", BUFFER); fflush(stdout);}
+#define Log(Message, ...)  {char BUFFER[512]  = {}; if(strlen(Message) > sizeof(BUFFER)) {Check(0, "[ERROR]: String is too large\n")}; sprintf(BUFFER, Message, ##__VA_ARGS__); printf("[INFO]: %s\n", BUFFER); fflush(stdout);}
 #define InvalidCodePath __debugbreak()
 
 #elif __linux__
@@ -28,7 +28,7 @@
 #define printm(Message, ...)   {char BUFFER[128]  = {}; if(strlen(Message) > sizeof(BUFFER)) {Check(0, "[ERROR]: String is too large\n")}; sprintf(BUFFER, Message, ##__VA_ARGS__); printf("%s\n", BUFFER);}
 #define printlm(Message, ...)  {char BUFFER[5192] = {}; if(strlen(Message) > sizeof(BUFFER)) {Check(0, "[ERROR]: String is too large\n")}; sprintf(BUFFER, Message, ##__VA_ARGS__); printf("%s\n", BUFFER);}
 #define cl_Error(Message, ...) {char BUFFER[512]  = {}; if(strlen(Message) > sizeof(BUFFER)) {Check(0, "[ERROR]: String is too large\n")}; sprintf(BUFFER, Message, ##__VA_ARGS__); printf("[ERROR]: %s\n", BUFFER); Assert(0);}
-#define cl_Info(Message, ...)  {char BUFFER[512]  = {}; if(strlen(Message) > sizeof(BUFFER)) {Check(0, "[ERROR]: String is too large\n")}; sprintf(BUFFER, Message, ##__VA_ARGS__); printf("[INFO]: %s\n", BUFFER);}
+#define Log(Message, ...)  {char BUFFER[512]  = {}; if(strlen(Message) > sizeof(BUFFER)) {Check(0, "[ERROR]: String is too large\n")}; sprintf(BUFFER, Message, ##__VA_ARGS__); printf("[INFO]: %s\n", BUFFER);}
 #define InvalidCodePath raise(SIGTRAP)
 
 #elif __APPLE__

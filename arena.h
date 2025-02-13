@@ -8,6 +8,7 @@
 
 #define ARENA_H
 #include "types.h"
+#include "debug.h"
 #include <stdlib.h>
 #include <string.h>
 
