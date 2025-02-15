@@ -128,7 +128,7 @@ FormatStringToBuffer(char *Buffer, uint64 Count, const char* fmt, va_list args)
                 // NOTE(Sleepster): %s in formatting 
                 temp += 1;
                 string S = va_arg(args, string);
-                Check(S.Length < (1024ULL * 1024ULL * 1024ULL * 256ULL), "This is not a fixed length 'string' to %%s. Check if it is a 'char*', if it is use %%cs instead");
+                Assert(S.Length < (1024ULL * 1024ULL * 1024ULL * 256ULL), "This is not a fixed length 'string' to %%s. Check if it is a 'char*', if it is use %%cs instead");
                 for(uint64 Index = 0;
                     Index < S.Length;
                     ++Index)
@@ -146,7 +146,7 @@ FormatStringToBuffer(char *Buffer, uint64 Count, const char* fmt, va_list args)
                 
                 while(*s != '\0' && uint64(Bufferp - Buffer) < Count - 1)
                 {
-                    Check(Length < (1024ULL * 1024ULL * 1024ULL * 256ULL), "Brother you passed something that isn't a CString, missing null terminator\n");
+                    Assert(Length < (1024ULL * 1024ULL * 1024ULL * 256ULL), "Brother you passed something that isn't a CString, missing null terminator\n");
                     if(Buffer)
                     {
                         *Bufferp = *s;
@@ -154,7 +154,7 @@ FormatStringToBuffer(char *Buffer, uint64 Count, const char* fmt, va_list args)
                     ++s;
                     ++Bufferp;
                     ++Length;
-                    Check(Length < (1024ULL * 1024ULL * 1024ULL * 256ULL), "Brother you passed something that isn't a CString, missing null terminator\n");
+                    Assert(Length < (1024ULL * 1024ULL * 1024ULL * 256ULL), "Brother you passed something that isn't a CString, missing null terminator\n");
                 }
             }
             else
@@ -225,7 +225,7 @@ SprintCStringArgsToBuffer(const char *fmt, va_list args, void *Buffer, uint64 Bu
     string Result = {};
     Result.Data = (uint8 *)Buffer;
     
-    if(FormatLength >= 0 && FormatLength < BufferSize)
+    if(FormatLength >= 0 && FormatLength < (int32)BufferSize)
     {
         Result.Length = FormatLength;
     }

@@ -8,88 +8,143 @@
 
 #define LIST_H
 #include "arena.h"
+#include "debug.h"
 #include "types.h"
 
-constexpr int32 DEFAULT_CAPACITY = 10;
+constexpr int32 LIST_GROW_FACTOR  = 2;
+constexpr int32 DEFAULT_LIST_SIZE = 20;
 
-// NOTE(Sleepster): Dynamic array
+// NOTE(Sleepster): This is created outside of the normal memory
+// allocation strategy, therefore we should use it very sparingly
 struct list
 {
-    uint32 Capacity;
-    uint32 Used;
-    uint32 ElementSize;
-    void  *Data;
+    uint64  Capacity;
+    uint64  Used;
+    uint64  Stride;
+    uint32  GrowFactor;
+
+    void   *Elements;
 };
 
-#define InitList(type) InitList_(sizeof(type));
+#define ListCreate(type, capacity) _ListCreate(sizeof(type), capacity)
 
-internal list
-InitList_(memory_index ElementSize)
+internal void*
+_ListCreate(uint64 ElementSize, uint64 Capacity = DEFAULT_LIST_SIZE, int32 GrowFactor = LIST_GROW_FACTOR)
 {
-    list Result      = {};
-    Result.Capacity    = DEFAULT_CAPACITY;
-    Result.Used        = 0;
-    Result.ElementSize = ElementSize;
-    Result.Data        = malloc(ElementSize * DEFAULT_CAPACITY);
-    return(Result);
+    list Result       = {};
+    Result.Capacity   = Capacity;
+    Result.Stride     = ElementSize;
+    Result.Used       = 0;
+    Result.GrowFactor = GrowFactor;
+    Result.Elements   = malloc((ElementSize * Capacity));
+
+    Log(LOG_INFO, "List created...\n");
 }
 
 internal void
-ListAppend(list *List, void *Element)
+ListDestroy(list *List)
 {
-    if(List->Used == List->Capacity)
-    {
-        List->Capacity = List->Capacity > 0 ? List->Capacity * 2 : 1;
-        void *Data = realloc(List->Data, List->ElementSize * List->Capacity);
-        if(!Data)
-        {
-            cl_Error("Failure to realloc the list...\n");
-        }
-
-        List->Data = Data;
-    }
-    uint32 Index = List->Used++;
-    memcpy((uint8*)List->Data + (Index * List->ElementSize), Element, List->ElementSize);
+    free(List->Elements);
+    List->Used     = 0;
+    List->Stride   = 0;
+    List->Capacity = 0;
 }
 
-internal void*
-ListGetIndex(list *List, int32 Index)
+internal inline void
+ListGrow(list *List)
 {
-    Assert(Index > 0);
-    if(Index < List->Capacity)
-    {
-        return((uint8*)List->Data + (Index * List->ElementSize));
-    }
-    else
-    {
-        printf("Index: %d, is out of bounds...\n", Index);
-        return(0);
-    }
+    void *NewElements = malloc(List->Stride * (List->Capacity * List->GrowFactor));
+    Assert(NewElements, "NewElements Failed to Alloc...\n");
+
+    memcpy(List->Elements, NewElements, List->Stride * List->Capacity);
+    free(List->Elements);
+        
+    List->Capacity *= List->GrowFactor;
+    List->Elements = NewElements;
 }
 
-// NOTE(Sleepster): This is a swap and pop method, swaps what's at the end of the list with the current index 
+internal inline void*
+ListGetValueAtIndex(list *List, int32 Index)
+{
+    if(Index >= List->Capacity)
+    {
+        Log(LOG_ERROR, "Index '%d' is invalid... List capacity is '%'...", Index, List->Capacity);
+        return(nullptr);
+    }
+    uint8 *Value = (uint8 *)List->Elements + (Index * List->Stride);
+    return(Value);
+}
+
+internal inline bool8 
+ListSetValueAtIndex(list *List, int32 Index, void *Value)
+{
+    if(Index >= List->Capacity)
+    {
+        Log(LOG_ERROR, "Failed to set value at index '%d', index is invalid!...", Index);
+        return(false);
+    }
+    
+    uint8 *ListValue = (uint8 *)List->Elements + (Index * List->Stride);
+    ListValue = (uint8 *)Value;
+
+    return(true);
+}
+
+// NOTE(Sleepster): This will always copy by value
+internal inline void
+ListAppendValue(list *List, auto *Value)
+{
+    if(List->Used + 1 >= List->Capacity)
+    {
+        ListGrow(List);
+    }
+    uint8 *ValueToAppend = List->Elements + (List->Used * List->Stride);
+    memcpy(ValueToAppend, Value, sizeof(*Value));
+}
+
 internal bool8 
-ListRemoveIndex(list *List, int32 Index)
+ListRemoveValueAtIndex(list *List, int32 Index)
 {
-    Check(List->Used != 0, "List Is Empty...\n");
-    if(Index < List->Used)
+    if(Index > List->Capacity)
     {
-        if(List->Used == 1)
-        {
-            List->Used = 0;
-            return(1);
-        }
+        Log(LOG_ERROR, "Index '%' is larger than the List's capacity!...", Index);
+        return(false);
+    }
 
-        --List->Used;
-        uint8 *ElementPtr = (uint8*)List->Data + (Index * List->ElementSize);
-        uint8 *DataEndPtr = (uint8*)List->Data + (List->Capacity * List->ElementSize);
-        memcpy(ElementPtr, DataEndPtr, List->ElementSize);
-    }
-    else
+    if(List->Used == 1)
     {
-        cl_Error("Cannot remove, index is currently unused...\n");
+        List->Used = 0;
+        return(true);
     }
-    return(1);
+
+    --List->Used;
+    uint8 *ElementPtr = (uint8*)List->Elements + (Index * List->Stride);
+    uint8 *DataEndPtr = (uint8*)List->Elements + (List->Capacity * List->Stride);
+    memcpy(ElementPtr, DataEndPtr, List->Stride);
+
+    return(true);
+}
+
+// IMPORTANT(Sleepster): If you use this, the "Used" value of the list no longer matters...
+internal inline void 
+ListInsertValueAtIndex(list *List, int32 Index, void *Value)
+{
+    bool8 IndexIsValid = (Index > List->Capacity);
+    while(!IndexIsValid)
+    {
+        ListGrow(List);
+        if(Index < List->Capacity) break;
+    }
+
+    uint8 *Valueptr = (uint8 *)List->Elements + (List->Stride * Index);
+    memcpy(Value, Valueptr, List->Stride);
+}
+
+internal inline void
+ListReset(list *List)
+{
+    List->Used = 0;
+    memset(List->Elements, 0, List->Stride * List->Capacity);
 }
 
 #endif

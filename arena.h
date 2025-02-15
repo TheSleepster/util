@@ -9,6 +9,7 @@
 #define ARENA_H
 #include "types.h"
 #include "debug.h"
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -37,15 +38,18 @@ struct scratch_memory
     memory_index  Used;
 };
 
+typedef void*(*allocator_func)(uint64 Size);
+
 // TODO(Sleepster): Replace malloc here
 internal memory_pool
-InitializeMemoryPool(usize Size)
+InitializeMemoryPool(usize Size, allocator_func Allocator)
 {
     memory_pool Result = {};
 
     Result.BlockSize   = Size;
-    Result.MemoryBlock = malloc(Result.BlockSize);
+    Result.MemoryBlock = Allocator(Result.BlockSize);
     Result.BlockOffset = (uint8 *)Result.MemoryBlock; 
+    Log(LOG_INFO, "Memory Pool Initialized with a size of: %d", Size);
 
     return(Result);
 }
@@ -83,7 +87,7 @@ PushSize_(memory_arena *Arena, memory_index Size, memory_index Alignment = 4)
     memory_index AlignmentOffset = GetAlignmentOffset(Arena, Alignment);
     Size += AlignmentOffset;
 
-    Assert((Arena->Used + Size) <= Arena->Capacity);
+    Assert((Arena->Used + Size) <= Arena->Capacity, "Arena allocation would exceed the capacity!");
 
     void *Result = (void *)(Arena->Base + Arena->Used + AlignmentOffset);
     Arena->Used += Size;
@@ -128,8 +132,8 @@ internal inline void
 EndScratchBlock(scratch_memory *Scratch)
 {
     memory_arena *Arena = Scratch->Arena;
-    Assert(Arena->Used >= Scratch->Used);
-    Assert(Arena->ScratchCount > 0);
+    Assert(Arena->Used >= Scratch->Used, "Scratch memory pointer not valid...");
+    Assert(Arena->ScratchCount > 0, "Cannot decrement arena scratch counter! It is already 0...");
 
     Arena->Used = Scratch->Used;
     Arena->ScratchCount--;

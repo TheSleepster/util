@@ -10,8 +10,6 @@
 #include "types.h"
 #include "debug.h"
 
-#include <alloca.h>
-
 // NOTE(Sleepster): This is limited to the stack
 struct array
 {
@@ -21,7 +19,7 @@ struct array
     void  *Data;
 };
 
-#define InitArray(type, count) InitArray_(sizeof(type), count) 
+#define InitArray(arena, type, count) InitArray_(arena, sizeof(type), count) 
 
 internal inline array
 InitArray_(int32 ElementSize, int32 Capacity)
@@ -30,7 +28,7 @@ InitArray_(int32 ElementSize, int32 Capacity)
     Result.ElementSize = ElementSize;
     Result.Capacity    = Capacity;
     Result.Used        = 0;
-    Result.Data        = alloca(ElementSize * Capacity);
+    Result.Data        = PushSize(ElementSize * Capacity);
 
     return(Result);
 }
@@ -44,7 +42,7 @@ GetArrayIndex(array *Array, int32 Index)
     }
     else
     {
-        cl_Error("Target Index is out of range...\n");
+        Log(DEBUG_ERROR, "Target Index is out of range...\n");
         return(0);
     }
 }
