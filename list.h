@@ -28,7 +28,7 @@ struct list
 
 #define ListCreate(type, capacity) _ListCreate(sizeof(type), capacity)
 
-internal void*
+internal list
 _ListCreate(uint64 ElementSize, uint64 Capacity = DEFAULT_LIST_SIZE, int32 GrowFactor = LIST_GROW_FACTOR)
 {
     list Result       = {};
@@ -37,8 +37,9 @@ _ListCreate(uint64 ElementSize, uint64 Capacity = DEFAULT_LIST_SIZE, int32 GrowF
     Result.Used       = 0;
     Result.GrowFactor = GrowFactor;
     Result.Elements   = malloc((ElementSize * Capacity));
+    Log(LOG_TRACE, "List created...");
 
-    Log(LOG_INFO, "List created...\n");
+    return(Result);
 }
 
 internal void
@@ -48,7 +49,22 @@ ListDestroy(list *List)
     List->Used     = 0;
     List->Stride   = 0;
     List->Capacity = 0;
+    Log(LOG_TRACE, "List has been destroyed...");
 }
+
+// NOTE(Sleepster): This will always copy by value
+internal inline void
+ListAppendValue(list *List, auto Value)
+{
+    if(List->Used + 1 >= List->Capacity)
+    {
+        ListGrow(List);
+    }
+    uint8 *ValueToAppend = (uint8 *)List->Elements + (List->Used * List->Stride);
+    memcpy(ValueToAppend, &Value, List->Stride);
+    ++List->Used;
+}
+
 
 internal inline void
 ListGrow(list *List)
@@ -88,18 +104,6 @@ ListSetValueAtIndex(list *List, int32 Index, void *Value)
     ListValue = (uint8 *)Value;
 
     return(true);
-}
-
-// NOTE(Sleepster): This will always copy by value
-internal inline void
-ListAppendValue(list *List, auto *Value)
-{
-    if(List->Used + 1 >= List->Capacity)
-    {
-        ListGrow(List);
-    }
-    uint8 *ValueToAppend = List->Elements + (List->Used * List->Stride);
-    memcpy(ValueToAppend, Value, sizeof(*Value));
 }
 
 internal bool8 

@@ -42,14 +42,14 @@ typedef void*(*allocator_func)(uint64 Size);
 
 // TODO(Sleepster): Replace malloc here
 internal memory_pool
-InitializeMemoryPool(usize Size, allocator_func Allocator)
+InitializeMemoryPool(usize Size, allocator_func Allocator = *malloc)
 {
     memory_pool Result = {};
 
     Result.BlockSize   = Size;
     Result.MemoryBlock = Allocator(Result.BlockSize);
     Result.BlockOffset = (uint8 *)Result.MemoryBlock; 
-    Log(LOG_INFO, "Memory Pool Initialized with a size of: %d", Size);
+    Log(LOG_INFO, "Memory Pool Initialized with a size of %d", Size);
 
     return(Result);
 }
@@ -96,15 +96,17 @@ PushSize_(memory_arena *Arena, memory_index Size, memory_index Alignment = 4)
 }
 
 // TODO(Sleepster): Make this simply take a memory offset rather than a memory block
-internal inline void 
-InitializeArena(memory_arena *Arena, memory_index Capacity, memory_pool *BlockBuffer)
+internal inline memory_arena 
+InitializeArena(memory_pool *BlockBuffer, memory_index Capacity)
 {
-    Arena->Capacity     = Capacity;
-    Arena->Used         = 0;
-    Arena->Base         = (uint8 *)BlockBuffer->BlockOffset;
-    Arena->ScratchCount = 0;
+    memory_arena Arena = {};
+    Arena.Capacity     = Capacity;
+    Arena.Used         = 0;
+    Arena.Base         = (uint8 *)BlockBuffer->BlockOffset;
+    Arena.ScratchCount = 0;
 
-    BlockBuffer->BlockOffset += Arena->Capacity;
+    BlockBuffer->BlockOffset += Arena.Capacity;
+    return(Arena);
 }
 
 internal inline memory_arena
